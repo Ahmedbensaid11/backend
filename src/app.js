@@ -12,9 +12,25 @@ app.use(cors());
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/admin", require("./routes/admin"));
 
+// New routes for the management system
+app.use("/api/workers", require("./routes/workers"));
+app.use("/api/vehicles", require("./routes/vehicles"));
+app.use("/api/suppliers", require("./routes/suppliers"));
+app.use("/api/leoni-personnel", require("./routes/leoni-personnel"));
+
 // Basic route
 app.get("/", (req, res) => {
-  res.json({ message: "API is running!" });
+  res.json({ 
+    message: "LEONI Personnel Management API is running!",
+    endpoints: {
+      auth: "/api/auth",
+      admin: "/api/admin",
+      workers: "/api/workers",
+      vehicles: "/api/vehicles",
+      suppliers: "/api/suppliers",
+      personnel: "/api/leoni-personnel"
+    }
+  });
 });
 
 // Error handling middleware
