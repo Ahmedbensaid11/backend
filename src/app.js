@@ -17,6 +17,7 @@ app.use("/api/workers", require("./routes/workers"));
 app.use("/api/vehicles", require("./routes/vehicles"));
 app.use("/api/suppliers", require("./routes/suppliers"));
 app.use("/api/leoni-personnel", require("./routes/leoni-personnel"));
+app.use('/api/schedule-presence', require('./routes/SchedulePresence'));
 
 // Basic route
 app.get("/", (req, res) => {
