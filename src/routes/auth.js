@@ -147,55 +147,141 @@ router.get("/me", verifyToken, async (req, res) => {
   }
 });
 
-// Update user profile
-router.patch("/profile", verifyToken, async (req, res) => {
+// Get current user profile
+router.get("/profile", verifyToken, async (req, res) => {
   try {
-    const { firstName, lastName, phoneNumber } = req.body;
-    const userId = req.user._id;
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { 
-        firstName: firstName || req.user.firstName,
-        lastName: lastName || req.user.lastName,
-        phoneNumber: phoneNumber || req.user.phoneNumber
-      },
-      { new: true }
-    ).select('-password');
-
-    res.json({ 
-      msg: "Profile updated successfully",
-      user: updatedUser 
+    res.json({
+      user: {
+        id: user._id,
+        cin: user.cin,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        birthdate: user.birthdate,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        isApproved: user.isApproved,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
     });
   } catch (error) {
-    console.error('Profile update error:', error);
+    console.error(error);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Update user profile
+router.put("/profile", verifyToken, async (req, res) => {
+  try {
+    const { cin, firstName, lastName, birthdate, phoneNumber, email } = req.body;
+    const userId = req.user.id;
+
+    // Validation
+    if (!firstName || !lastName || !email || !cin || !birthdate || !phoneNumber) {
+      return res.status(400).json({ msg: "All fields are required" });
+    }
+
+    // Check if email is being changed and if it's already taken by another user
+    if (email !== req.user.email) {
+      const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+      if (existingUser) {
+        return res.status(400).json({ msg: "Email already exists" });
+      }
+    }
+
+    // Check if CIN is being changed and if it's already taken by another user
+    const existingCIN = await User.findOne({ cin, _id: { $ne: userId } });
+    if (existingCIN) {
+      return res.status(400).json({ msg: "CIN already exists" });
+    }
+
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        cin,
+        firstName,
+        lastName,
+        birthdate,
+        phoneNumber,
+        email,
+      },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    res.json({
+      msg: "Profile updated successfully",
+      user: {
+        id: updatedUser._id,
+        cin: updatedUser.cin,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        birthdate: updatedUser.birthdate,
+        phoneNumber: updatedUser.phoneNumber,
+        role: updatedUser.role,
+        isApproved: updatedUser.isApproved,
+        isActive: updatedUser.isActive,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ msg: "Validation error", errors: error.errors });
+    }
     res.status(500).json({ msg: "Server error" });
   }
 });
 
 // Change password
-router.patch("/change-password", verifyToken, async (req, res) => {
+router.put("/change-password", verifyToken, async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
-    const userId = req.user._id;
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.id;
 
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ msg: "Current password and new password are required" });
+    // Validation
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ msg: "Both old and new passwords are required" });
     }
 
+    if (newPassword.length < 6) {
+      return res.status(400).json({ msg: "New password must be at least 6 characters long" });
+    }
+
+    // Get user with password
     const user = await User.findById(userId);
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    
-    if (!isMatch) {
-      return res.status(400).json({ msg: "Current password is incorrect" });
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
     }
 
+    // Verify old password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Old password is incorrect" });
+    }
+
+    // Hash new password
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
     await User.findByIdAndUpdate(userId, { password: hashedNewPassword });
 
     res.json({ msg: "Password changed successfully" });
   } catch (error) {
-    console.error('Password change error:', error);
+    console.error(error);
     res.status(500).json({ msg: "Server error" });
   }
 });
