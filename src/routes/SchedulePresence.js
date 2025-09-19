@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const SchedulePresence = require('../models/SchedulePresence');
-const { isAdmin } = require('../middleware/auth');
+const { verifyToken, isAdmin } = require('../middleware/auth');
 
 // @route   GET /api/schedule-presence
-// @desc    Get all scheduled presences (Admin only)
-// @access  Private (Admin)
-router.get('/', isAdmin, async (req, res) => {
+// @desc    Get all scheduled presences (Any authenticated user can view)
+// @access  Private (Any authenticated user)
+router.get('/', verifyToken, async (req, res) => {
   try {
     const { 
       page = 1, 
@@ -64,9 +64,9 @@ router.get('/', isAdmin, async (req, res) => {
 });
 
 // @route   GET /api/schedule-presence/:id
-// @desc    Get single scheduled presence (Admin only)
-// @access  Private (Admin)
-router.get('/:id', isAdmin, async (req, res) => {
+// @desc    Get single scheduled presence (Any authenticated user can view)
+// @access  Private (Any authenticated user)
+router.get('/:id', verifyToken, async (req, res) => {
   try {
     const schedule = await SchedulePresence.findById(req.params.id)
       .populate('createdBy', 'name email');

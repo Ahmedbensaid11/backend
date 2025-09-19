@@ -1,7 +1,7 @@
+// routes/personnel.js - Routes for LeoniPersonnel management
 const express = require('express');
 const router = express.Router();
 const { verifyToken, isAdmin, isSOS } = require('../middleware/auth');
-
 const LeoniPersonnel = require('../models/LeoniPersonnel');
 const Vehicle = require('../models/Vehicle');
 
