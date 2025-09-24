@@ -1,11 +1,17 @@
-const app = require("./app");
-const connectDB = require("./config/db");
+// server.js
+const mongoose = require('mongoose');
+const app = require('./app');
+require('dotenv').config();
 
-const PORT = process.env.PORT || 5000;
+// Simple MongoDB connection
+mongoose.connect('mongodb://localhost:27017/leoni_db')
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.error('❌ MongoDB error:', err));
 
-// ✅ Call the function
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-  });
+const PORT = 5000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📋 Test: http://localhost:${PORT}/api/test`);
+  console.log(`📋 Incidents test: http://localhost:${PORT}/api/incidents/test`);
 });
