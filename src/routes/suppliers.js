@@ -19,7 +19,7 @@ router.post('/', verifyToken, async (req, res) => {
       vehicle 
     } = req.body;
 
-    console.log('Received data:', req.body); // Debug log
+    console.log('Received data:', req.body);
 
     // Check duplicate email
     const existingEmail = await Supplier.findOne({ email: email.toLowerCase() });
@@ -56,7 +56,7 @@ router.post('/', verifyToken, async (req, res) => {
       return res.status(400).json({ msg: 'Phone number must be exactly 8 digits' });
     }
 
-    // Create supplier with all fields (id_sup and num_vst will be auto-generated)
+    // Create supplier
     const newSupplier = new Supplier({ 
       name,
       email: email.toLowerCase(),
@@ -90,10 +90,20 @@ router.post('/', verifyToken, async (req, res) => {
 
   } catch (error) {
     console.error('Error creating supplier:', error);
+    
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern)[0];
+      
+      // Handle the old num_vst index error specifically
+      if (field === 'num_vst') {
+        return res.status(500).json({ 
+          msg: 'Database configuration error. Please contact administrator to clean up old indexes.' 
+        });
+      }
+      
       return res.status(400).json({ msg: `Duplicate ${field}. This ${field} already exists.` });
     }
+    
     res.status(500).json({ msg: 'Server error' });
   }
 });

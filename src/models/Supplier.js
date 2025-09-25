@@ -18,12 +18,7 @@ const SupplierSchema = new mongoose.Schema({
     required: true
   },
 
-  num_vst: {
-    type: String,
-    unique: true,
-    trim: true
-    // Will be auto-generated in pre-save middleware
-  },
+ 
   
   // Frontend required fields
   name: {

@@ -1,9 +1,23 @@
 const mongoose = require("mongoose");
 
+// Clear any existing model to prevent OverwriteModelError
+if (mongoose.models.Incident) {
+  delete mongoose.models.Incident;
+}
+
 const incidentSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['Real Parking', 'Application'],
+    enum: [
+      'Login bug',
+      'Report submission error', 
+      'Gate malfunction',
+      'Electricity outage',
+      'Fire',
+      'Car accident',
+      'Unauthorized worker entry',
+      "Worker's vehicle overstaying"
+    ],
     required: true
   },
   description: {
@@ -17,7 +31,7 @@ const incidentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'resolved'],
+    enum: ['pending', 'resolved'],
     default: 'pending'
   },
   reportedBy: {
@@ -25,20 +39,7 @@ const incidentSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  approvedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null
-  },
-  approvedAt: {
-    type: Date,
-    default: null
-  },
-  adminNotes: {
-    type: String,
-    default: ''
-  },
-  priority: {
+  default_priority: {
     type: String,
     enum: ['low', 'medium', 'high', 'critical'],
     default: 'medium'
@@ -47,12 +48,13 @@ const incidentSchema = new mongoose.Schema({
     type: Date,
     default: null
   }
-}, { 
-  timestamps: true 
+}, {
+  timestamps: true
 });
 
 // Index for better query performance
 incidentSchema.index({ reportedBy: 1, createdAt: -1 });
 incidentSchema.index({ status: 1, createdAt: -1 });
+incidentSchema.index({ default_priority: 1 });
 
 module.exports = mongoose.model("Incident", incidentSchema);

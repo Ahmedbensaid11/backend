@@ -19,8 +19,6 @@ router.post('/checkin', verifyToken, async (req, res) => {
       personType, // 'Supplier', 'Worker', 'LeoniPersonnel'
       vehicleId,
       entryTime,
-      notes,
-      parkingLocation
     } = req.body;
 
     // Validate required fields
@@ -63,7 +61,6 @@ router.post('/checkin', verifyToken, async (req, res) => {
       status: 'entry',
       entryTime: visitDate,
       logDate: visitDate,
-      notes: notes || '',
       recordedBy: req.user._id
     });
 
@@ -89,8 +86,6 @@ router.post('/checkin', verifyToken, async (req, res) => {
         log: savedLog._id,
         entry_time: savedLog.entryTime,
         vlog_date: visitDate,
-        parkingLocation: parkingLocation || '',
-        vehicleNotes: '',
         recordedBy: req.user._id
       });
       await vehicleLog.save();
@@ -140,7 +135,6 @@ router.post('/checkout', verifyToken, async (req, res) => {
       personId,
       personType,
       exitTime,
-      notes
     } = req.body;
 
     // Find the active entry for this person
@@ -180,10 +174,7 @@ router.post('/checkout', verifyToken, async (req, res) => {
       activeLog.duration = 0;
     }
     
-    // Add notes if provided
-    if (notes) {
-      activeLog.notes = activeLog.notes ? `${activeLog.notes} | ${notes}` : notes;
-    }
+
 
     // Save the updated log
     const updatedLog = await activeLog.save();
@@ -192,7 +183,6 @@ router.post('/checkout', verifyToken, async (req, res) => {
     const vehicleLog = await Vehiculog.findOne({ log: activeLog._id });
     if (vehicleLog) {
       vehicleLog.exit_time = updatedLog.exitTime;
-      if (notes) vehicleLog.vehicleNotes = notes;
       await vehicleLog.save();
     }
 
