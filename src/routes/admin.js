@@ -109,6 +109,7 @@ router.patch("/approve-user/:userId", isAdmin, async (req, res) => {
     }
 
     // Update user approval status
+    user.isActive = true;
     user.isApproved = true;
     user.approvedBy = adminId;
     user.approvedAt = new Date();

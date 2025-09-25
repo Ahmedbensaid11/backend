@@ -10,14 +10,14 @@ const Vehicle = require('../models/Vehicle');
 // =====================================================
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { matricule, name, cin, email, address, state, postal_code, vehicle } = req.body;
+    const { matricule, name, cin, email, phone, address, state, postal_code, vehicle } = req.body;
 
     // Check duplicates
     const existingPersonnel = await LeoniPersonnel.findOne({
-      $or: [{ matricule }, { email }, { cin }]
+      $or: [{ matricule }, { email }, { cin }, { phone }]
     });
     if (existingPersonnel) {
-      return res.status(400).json({ msg: 'Personnel already exists with this matricule, email, or CIN' });
+      return res.status(400).json({ msg: 'Personnel already exists with this matricule, email, CIN, or phone number' });
     }
 
     // Create personnel
@@ -26,6 +26,7 @@ router.post('/', verifyToken, async (req, res) => {
       name,
       cin,
       email,
+      phone,
       address,
       state,
       postal_code
@@ -114,25 +115,26 @@ router.get('/:id', verifyToken, async (req, res) => {
 // =====================================================
 router.put('/:id', verifyToken, async (req, res) => {
   try {
-    const { matricule, name, cin, email, address, state, postal_code, vehicle } = req.body;
+    const { matricule, name, cin, email, phone, address, state, postal_code, vehicle } = req.body;
 
     const personnel = await LeoniPersonnel.findById(req.params.id);
     if (!personnel) return res.status(404).json({ msg: 'Personnel not found' });
 
     // Check for duplicates (excluding current record)
-    if (matricule || email || cin) {
+    if (matricule || email || cin || phone) {
       const duplicateQuery = { _id: { $ne: req.params.id } };
       const orConditions = [];
       
       if (matricule) orConditions.push({ matricule });
       if (email) orConditions.push({ email });
       if (cin) orConditions.push({ cin });
+      if (phone) orConditions.push({ phone });
       
       if (orConditions.length > 0) {
         duplicateQuery.$or = orConditions;
         const existingPersonnel = await LeoniPersonnel.findOne(duplicateQuery);
         if (existingPersonnel) {
-          return res.status(400).json({ msg: 'Another personnel already exists with this matricule, email, or CIN' });
+          return res.status(400).json({ msg: 'Another personnel already exists with this matricule, email, CIN, or phone number' });
         }
       }
     }
@@ -142,6 +144,7 @@ router.put('/:id', verifyToken, async (req, res) => {
     if (name) personnel.name = name;
     if (cin) personnel.cin = cin;
     if (email) personnel.email = email;
+    if (phone) personnel.phone = phone;
     if (address) personnel.address = address;
     if (state) personnel.state = state;
     if (postal_code) personnel.postal_code = postal_code;
